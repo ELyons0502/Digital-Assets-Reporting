@@ -1,0 +1,856 @@
+Market Reporting
+## Import packages 
+import numpy as np #python library for scientific computing
+import pandas as pd #python library for data manipulation and analysis
+import matplotlib.pyplot as plt #python library for charting
+from pandas_datareader import data as pdr #extract data from internet sources into pandas data frame
+import datetime as dt
+from datetime import datetime
+import seaborn as sns
+import yfinance as yf
+yf.pdr_override()
+import matplotlib.pyplot as plt
+import plotly.express as px
+import plotly.figure_factory as ff
+import plotly.graph_objects as go
+Import Data
+data = pdr.get_data_yahoo('^GSPC', start='2020-01-01')
+data2 = pdr.get_data_yahoo('^IXIC', start='2020-01-01')
+data3 = pdr.get_data_yahoo('^FTSE', start='2020-01-01')
+data4 = pdr.get_data_yahoo('BTC-USD', start='2020-01-01')
+data5 = pdr.get_data_yahoo('ETH-USD', start='2020-01-01')
+data6 = pdr.get_data_yahoo('USDT-USD', start='2020-01-01')
+data7 = pdr.get_data_yahoo('USDC-USD', start='2020-01-01')
+data8 = pdr.get_data_yahoo('BNB-USD', start='2020-01-01')
+data9 = pdr.get_data_yahoo('XRP-USD', start='2020-01-01')
+data10 = pdr.get_data_yahoo('DOGE-USD', start='2020-01-01')
+data11 = pdr.get_data_yahoo('ADA-USD', start='2020-01-01')
+data12 = pdr.get_data_yahoo('MATIC-USD', start='2020-01-01')
+data13 = pdr.get_data_yahoo('BUSD-USD', start='2020-01-01')
+data14 = pdr.get_data_yahoo('DSPC', start='2020-01-01')
+[*********************100%***********************]  1 of 1 completed
+[*********************100%***********************]  1 of 1 completed
+[*********************100%***********************]  1 of 1 completed
+[*********************100%***********************]  1 of 1 completed
+[*********************100%***********************]  1 of 1 completed
+[*********************100%***********************]  1 of 1 completed
+[*********************100%***********************]  1 of 1 completed
+[*********************100%***********************]  1 of 1 completed
+[*********************100%***********************]  1 of 1 completed
+[*********************100%***********************]  1 of 1 completed
+[*********************100%***********************]  1 of 1 completed
+[*********************100%***********************]  1 of 1 completed
+[*********************100%***********************]  1 of 1 completed
+[*********************100%***********************]  1 of 1 completed
+SP500 = data[["Adj Close"]]
+Nasdaq = data2[["Adj Close"]]
+FTSE100 = data3[["Adj Close"]]
+DA_Index = data14[["Adj Close"]] # Digital Assets index tracker
+BTC = data4[["Adj Close"]]
+ETH = data5[["Adj Close"]]
+USDT = data6[["Adj Close"]] # SC from Tether
+USDC = data7[["Adj Close"]] # SC from circle
+BNB = data8[["Adj Close"]] # Binance token to pay for on-chain transactions
+Ripple = data9[["Adj Close"]]
+Dogecoin = data10[["Adj Close"]]
+Cardano = data11[["Adj Close"]]
+Polygon = data12[["Adj Close"]]
+BUSD = data13[["Adj Close"]] # Binance stablecoin, used for hegding and redeemability
+​
+DA_Index.rename(columns={"Adj Close": "DA Index"}, inplace = True)
+SP500.rename(columns={"Adj Close": "S&P 500"}, inplace = True)
+Nasdaq.rename(columns={"Adj Close": "Nasdaq"}, inplace = True)
+FTSE100.rename(columns={"Adj Close": "FTSE100"}, inplace = True)
+BTC.rename(columns={"Adj Close": "BTC"}, inplace = True)
+ETH.rename(columns={"Adj Close": "ETH"}, inplace = True)
+USDT.rename(columns={"Adj Close": "USDT"}, inplace = True)
+USDC.rename(columns={"Adj Close": "USDC"}, inplace = True)
+BNB.rename(columns={"Adj Close": "BNB"}, inplace = True)
+Ripple.rename(columns={"Adj Close": "Ripple"}, inplace = True)
+Dogecoin.rename(columns={"Adj Close": "Dogecoin"}, inplace = True)
+Cardano.rename(columns={"Adj Close": "Cardano"}, inplace = True)
+Polygon.rename(columns={"Adj Close": "Polygon"}, inplace = True)
+BUSD.rename(columns={"Adj Close": "BUSD"}, inplace = True)
+df1 = pd.concat([SP500,Nasdaq,FTSE100, DA_Index, BTC, ETH, USDT,USDC,BNB, BUSD,Ripple,Dogecoin, Cardano,Polygon], axis = 1).round(3)
+# sort by date
+df1 = df1.sort_values(by = ['Date'])
+​
+df1.dropna(axis = 0, how = 'any', inplace = True)
+df1.tail(20)
+S&P 500	Nasdaq	FTSE100	DA Index	BTC	ETH	USDT	USDC	BNB	BUSD	Ripple	Dogecoin	Cardano	Polygon
+Date														
+2022-12-29	3849.28	10478.09	7512.7	4.997	16642.342	1201.595	1.0	1.0	246.480	1.001	0.343	0.071	0.244	0.777
+2022-12-30	3839.50	10466.48	7451.7	4.990	16602.586	1199.233	1.0	1.0	245.779	1.000	0.345	0.068	0.246	0.761
+2023-01-03	3824.14	10386.98	7554.1	5.106	16679.857	1214.779	1.0	1.0	246.133	1.000	0.344	0.070	0.253	0.780
+2023-01-04	3852.97	10458.76	7585.2	5.323	16863.238	1256.527	1.0	1.0	259.120	1.000	0.348	0.073	0.268	0.806
+2023-01-05	3808.10	10305.24	7633.5	5.070	16836.736	1250.439	1.0	1.0	256.423	1.000	0.338	0.072	0.269	0.789
+2023-01-06	3895.08	10569.29	7699.5	5.280	16951.969	1269.379	1.0	1.0	259.867	1.000	0.345	0.072	0.279	0.799
+2023-01-09	3892.09	10635.65	7724.9	5.383	17196.555	1321.539	1.0	1.0	272.702	1.000	0.349	0.076	0.317	0.844
+2023-01-10	3919.25	10742.63	7694.5	5.502	17446.293	1336.586	1.0	1.0	277.290	1.000	0.351	0.078	0.322	0.858
+2023-01-11	3969.61	10931.67	7725.0	5.640	17934.896	1387.933	1.0	1.0	285.047	1.000	0.374	0.078	0.323	0.893
+2023-01-12	3983.17	11001.10	7794.0	5.890	18869.588	1417.938	1.0	1.0	287.812	1.000	0.375	0.080	0.330	0.916
+2023-01-13	3999.09	11079.16	7844.1	5.830	19909.574	1451.615	1.0	1.0	293.733	1.000	0.386	0.084	0.346	0.931
+2023-01-17	3990.97	11095.11	7851.0	6.000	21161.520	1567.846	1.0	1.0	299.825	1.001	0.388	0.083	0.346	0.996
+2023-01-18	3928.86	10957.01	7830.7	5.914	20688.781	1515.507	1.0	1.0	286.991	1.000	0.379	0.080	0.327	0.940
+2023-01-19	3898.85	10852.27	7747.3	5.530	21086.793	1552.557	1.0	1.0	294.852	1.000	0.394	0.082	0.339	0.953
+2023-01-20	3972.61	11140.43	7770.6	5.740	22676.553	1659.754	1.0	1.0	304.973	1.000	0.413	0.086	0.365	1.026
+2023-01-23	4019.81	11364.41	7784.7	5.740	22934.432	1628.251	1.0	1.0	305.504	1.000	0.425	0.089	0.376	0.995
+2023-01-24	4016.95	11334.27	7757.4	5.740	22636.469	1556.604	1.0	1.0	300.612	1.000	0.408	0.084	0.359	0.956
+2023-01-25	4016.22	11313.36	7744.9	5.740	23117.859	1611.711	1.0	1.0	307.308	1.000	0.418	0.087	0.373	0.994
+2023-01-26	4060.43	11512.41	7761.1	5.740	23032.777	1603.106	1.0	1.0	304.867	1.000	0.410	0.086	0.380	1.122
+2023-01-27	4070.56	11621.71	7765.2	5.740	23078.729	1598.156	1.0	1.0	308.123	1.000	0.413	0.087	0.389	1.158
+fig = px.line(title = "Nominal Prices, $")
+​
+x_norm = df1.index
+​
+# Loop through each stock (while ignoring time columns with index 0)
+for stock in df1.columns[0:]:
+    fig.add_scatter(x = x_norm, y = df1[stock], name = stock)
+fig.show()
+Let's visualise the correlation
+df1.corr()
+corr_matrix = df1.corr()
+f, ax = plt.subplots(figsize=(12, 10))
+sns.heatmap(corr_matrix, annot=True).set_title('Correlation of cryptoassets with market benchmarks')
+plt.show()
+
+Analysis exl. stablecoins
+df2 = df1.drop(columns=['USDT', 'BUSD', 'USDC'])
+corr_matrix = df2.corr()
+f, ax = plt.subplots(figsize=(12, 10))
+sns.heatmap(corr_matrix, annot=True).set_title('Correlation of cryptoassets with market benchmarks')
+plt.show()
+
+def daily_return_estimator(df):
+    df_daily_return = df.copy()
+    # Loop through each stock (column of the dataframe except Date collumn)
+    for i in df2.columns[:]:
+ 
+        # Loop through each row/price belonging to the stock
+        for j in range(1, len(df2)):
+# Calculate the percentage of change from the previous day's close price. Simple equation of percentage change.
+            df_daily_return[i][j] = ((df2[i][j]- df2[i][j-1])/df2[i][j-1]) * 100
+ 
+         # set the value of first row to zero (previous value is not available)
+        df_daily_return.loc[0, i] = 0
+ 
+    return df_daily_return
+stocks_daily_return = daily_return_estimator(df2)
+stocks_daily_return.head(5)
+df = stocks_daily_return.iloc[1: , :]
+C:\Users\edward.lyons\AppData\Local\Temp\ipykernel_19560\360417798.py:9: FutureWarning:
+
+Treating integers as positional in Series.__setitem__ with a Float64Index is deprecated. In a future version, `series[an_int] = val` will insert a new key into the Series. Use `series.iloc[an_int] = val` to treat the key as positional.
+
+df = df.drop(columns=['Dogecoin'])
+df
+S&P 500	Nasdaq	FTSE100	DA Index	BTC	ETH	BNB	Ripple	Cardano	Polygon
+Date										
+2021-05-19 00:00:00	-0.294344	-0.029315	-1.194166	0.332000	-13.766123	-27.200354	-33.265685	-32.746700	-25.998004	-32.396088
+2021-05-20 00:00:00	1.055476	1.774471	1.001410	1.674441	10.216345	13.151451	16.101467	10.841121	22.049899	10.970464
+2021-05-21 00:00:00	-0.078382	-0.478363	-0.024217	0.341136	-8.528233	-12.702430	-17.102331	-15.092749	-14.254144	-19.500272
+2021-05-24 00:00:00	0.991131	1.411774	0.477337	0.597890	3.756335	8.761958	5.827224	-1.390268	-0.193299	15.924426
+2021-05-25 00:00:00	-0.212530	-0.029280	-0.309150	-1.907315	-0.784781	2.384559	-0.346355	-1.711984	0.387347	12.922002
+...	...	...	...	...	...	...	...	...	...	...
+2023-01-24 00:00:00	-0.071148	-0.265214	-0.350688	0.000000	-1.299195	-4.400243	-1.601288	-4.000000	-4.521277	-3.919598
+2023-01-25 00:00:00	-0.018173	-0.184485	-0.161136	0.000000	2.126613	3.540207	2.227456	2.450980	3.899721	3.974895
+2023-01-26 00:00:00	1.100786	1.759424	0.209170	0.000000	-0.368036	-0.533905	-0.794317	-1.913876	1.876676	12.877264
+2023-01-27 00:00:00	0.249481	0.949410	0.052828	0.000000	0.199507	-0.308776	1.068007	0.731707	2.368421	3.208556
+0	0.000000	0.000000	0.000000	0.000000	0.000000	0.000000	0.000000	0.000000	0.000000	0.000000
+417 rows × 10 columns
+
+df.boxplot(figsize=(12, 10), grid=False)
+plt.title("Interday change in price, %")
+Text(0.5, 1.0, 'Interday change in price, %')
+
+Logarthmic prices (excl. stablecoins)
+import numpy as np 
+​
+df_log = np.log10(df2) 
+df_log
+S&P 500	Nasdaq	FTSE100	DA Index	BTC	ETH	BNB	Ripple	Dogecoin	Cardano	Polygon
+Date											
+2021-05-18	3.615722	4.123970	3.847215	1.397940	4.632552	3.528926	2.705883	0.201670	-0.322393	0.301898	0.389875
+2021-05-19	3.614442	4.123843	3.841997	1.399379	4.568230	3.391055	2.530232	0.029384	-0.477556	0.171141	0.219846
+2021-05-20	3.619001	4.131482	3.846325	1.406591	4.610476	3.444715	2.595069	0.074085	-0.397940	0.257679	0.265054
+2021-05-21	3.618661	4.129400	3.846220	1.408070	4.571763	3.385717	2.513612	0.003029	-0.444906	0.190892	0.170848
+2021-05-24	3.622944	4.135488	3.848288	1.410659	4.587778	3.422194	2.538209	-0.003051	-0.436519	0.190051	0.235023
+...	...	...	...	...	...	...	...	...	...	...	...
+2023-01-23	3.604206	4.055547	3.891242	0.758912	4.360488	3.211721	2.485017	-0.371611	-1.050610	-0.424812	-0.002177
+2023-01-24	3.603896	4.054394	3.889716	0.758912	4.354809	3.192178	2.478006	-0.389340	-1.075721	-0.444906	-0.019542
+2023-01-25	3.603817	4.053592	3.889016	0.758912	4.363948	3.207287	2.487574	-0.378824	-1.060481	-0.428291	-0.002614
+2023-01-26	3.608572	4.061166	3.889923	0.758912	4.362346	3.204962	2.484110	-0.387216	-1.065502	-0.420216	0.049993
+2023-01-27	3.609654	4.065270	3.890153	0.758912	4.363212	3.203619	2.488724	-0.384050	-1.060481	-0.410050	0.063709
+417 rows × 11 columns
+
+fig = px.line(title = "Logarthmic price of digital assets, Log(10)") # NOTE this is log prices NOT returns
+​
+x1 = df_log.index
+​
+# Loop through each stock (while ignoring time columns with index 0)
+for stock in df_log.columns[0:]:
+    fig.add_scatter(x = x1, y = df_log[stock], name = stock)
+fig.show()
+Logarithmic returns (excl. stablecoins)
+We use log returns to compare day-day changes in returns. This is useful as it allows for Logarithmic returns are useful for mathematical finance. One of the advantages is that the logarithmic returns are symmetric. While ordinary returns are not, logarithmic returns of equal magnitude but opposite signs will cancel each other out.
+
+This means that an investment of 100% that yields a simple return of 50%, followed by a simple return of −50% will result in 75,𝑤ℎ𝑖𝑙𝑒𝑎𝑛𝑖𝑛𝑣𝑒𝑠𝑡𝑚𝑒𝑛𝑡𝑜𝑓
+100 that yields a logarithmic return of 50% followed by a logarithmic return of −50% will come back to $100. This allows for us to compare additive changes in returns and thus compare % changes consistently (in the first case, 50% increase is different to 50% decrease).
+
+Logs are useful for rolling analysis, whereas normal prices are useful for comparison relative to a set point in time. The latter is more akin to indexing.
+
+Use this website for info: https://lucaslouca.com/Why-Use-Logarithmic-Returns-In-Time-Series-Modelling/#:~:text=Logarithmic%20returns%20are%20useful%20for,will%20cancel%20each%20other%20out.
+
+SP500 = np.log(data['Adj Close'])-np.log(data['Adj Close'].shift())
+DA_Index = np.log(data14['Adj Close'])-np.log(data14['Adj Close'].shift())
+Nasdaq = np.log(data2['Adj Close'])-np.log(data2['Adj Close'].shift())
+FTSE100 = np.log(data3['Adj Close'])-np.log(data3['Adj Close'].shift())
+BTC = np.log(data4['Adj Close'])-np.log(data4['Adj Close'].shift())
+ETH = np.log(data5['Adj Close'])-np.log(data5['Adj Close'].shift())
+BNB = np.log(data8['Adj Close'])-np.log(data8['Adj Close'].shift())
+Ripple = np.log(data9['Adj Close'])-np.log(data9['Adj Close'].shift())
+Dogecoin  = np.log10(data10['Adj Close'])-np.log(data10['Adj Close'].shift())
+Cardano = np.log(data11['Adj Close'])-np.log(data11['Adj Close'].shift())
+Polygon = np.log(data12['Adj Close'])-np.log(data12['Adj Close'].shift())
+df3 = pd.concat([SP500,Nasdaq,FTSE100, DA_Index, BTC, ETH, BNB, Ripple,Dogecoin, Cardano,Polygon], axis = 1).round(3)
+# sort by date
+df3 = df3.sort_values(by = ['Date'])
+​
+df3.dropna(axis = 0, how = 'any', inplace = True)
+df3.tail(7)
+Adj Close	Adj Close	Adj Close	Adj Close	Adj Close	Adj Close	Adj Close	Adj Close	Adj Close	Adj Close	Adj Close
+Date											
+2023-01-19	-0.008	-0.010	-0.011	-0.067	0.019	0.024	0.027	0.037	1.435	0.037	0.013
+2023-01-20	0.019	0.026	0.003	0.037	0.073	0.067	0.034	0.048	1.442	0.072	0.074
+2023-01-23	0.012	0.020	0.002	0.000	0.009	-0.000	0.008	0.058	1.374	-0.003	0.001
+2023-01-24	-0.001	-0.003	-0.004	0.000	-0.013	-0.045	-0.016	-0.041	1.348	-0.044	-0.040
+2023-01-25	-0.000	-0.002	-0.002	0.000	0.021	0.035	0.022	0.024	1.415	0.039	0.039
+2023-01-26	0.011	0.017	0.002	0.000	-0.004	-0.005	-0.008	-0.018	1.383	0.018	0.122
+2023-01-27	0.002	0.009	0.001	0.000	0.002	-0.003	0.011	0.007	1.389	0.023	0.032
+# rename columns
+df3.columns =['S&P 500','Nasdaq', 'FTSE100', 'DA Index', 'BTC','ETH','BNB','Ripple','Dogecoin','Cardano','Polygon']
+df3
+S&P 500	Nasdaq	FTSE100	DA Index	BTC	ETH	BNB	Ripple	Dogecoin	Cardano	Polygon
+Date											
+2021-05-19	-0.003	-0.000	-0.012	0.003	-0.148	-0.317	-0.404	-0.396	0.265	-0.301	-0.391
+2021-05-20	0.010	0.018	0.010	0.017	0.097	0.124	0.149	0.102	0.702	0.200	0.104
+2021-05-21	-0.001	-0.005	-0.000	0.003	-0.089	-0.136	-0.188	-0.163	0.471	-0.154	-0.217
+2021-05-24	0.010	0.014	0.005	0.006	0.107	0.226	0.272	0.220	0.741	0.156	0.458
+2021-05-25	-0.002	-0.000	-0.003	-0.019	-0.008	0.024	-0.003	-0.017	0.544	0.004	0.122
+...	...	...	...	...	...	...	...	...	...	...	...
+2023-01-23	0.012	0.020	0.002	0.000	0.009	-0.000	0.008	0.058	1.374	-0.003	0.001
+2023-01-24	-0.001	-0.003	-0.004	0.000	-0.013	-0.045	-0.016	-0.041	1.348	-0.044	-0.040
+2023-01-25	-0.000	-0.002	-0.002	0.000	0.021	0.035	0.022	0.024	1.415	0.039	0.039
+2023-01-26	0.011	0.017	0.002	0.000	-0.004	-0.005	-0.008	-0.018	1.383	0.018	0.122
+2023-01-27	0.002	0.009	0.001	0.000	0.002	-0.003	0.011	0.007	1.389	0.023	0.032
+416 rows × 11 columns
+
+df3.describe().round(2)
+S&P 500	Nasdaq	FTSE100	DA Index	BTC	ETH	BNB	Ripple	Dogecoin	Cardano	Polygon
+count	416.00	416.00	416.00	416.00	416.00	416.00	416.00	416.00	416.00	416.00	416.00
+mean	-0.00	-0.00	0.00	-0.00	-0.00	-0.00	-0.00	-0.00	1.15	-0.01	0.00
+std	0.01	0.02	0.01	0.04	0.04	0.05	0.05	0.06	0.32	0.06	0.08
+min	-0.04	-0.05	-0.04	-0.12	-0.17	-0.32	-0.40	-0.40	0.26	-0.30	-0.39
+25%	-0.01	-0.01	-0.00	-0.02	-0.02	-0.03	-0.02	-0.03	0.87	-0.03	-0.04
+50%	-0.00	0.00	0.00	0.00	-0.00	-0.00	0.00	0.00	1.13	-0.00	0.00
+75%	0.01	0.01	0.00	0.02	0.02	0.03	0.02	0.02	1.46	0.02	0.04
+max	0.05	0.07	0.04	0.15	0.14	0.23	0.27	0.22	1.69	0.20	0.46
+df3.hist(figsize=(12, 10), grid=False, color = "cornflowerblue")
+​
+plt.title("Distribution of daily log returns for each digital asset")
+​
+# NB, y axis = Freq, x axis = logarithmic return to base 10
+​
+# Use https://matplotlib.org/2.0.2/examples/color/named_colors.html for colors
+Text(0.5, 1.0, 'Distribution of daily log returns for each digital asset')
+
+Let's now look at the skewness
+
+NB:
+
+Skewness = 0: Then normally distributed.
+
+Skewness > 0: Then more weight in the left tail of the distribution. Observed when the distribution has a thicker right tail and mode<median<mean (i.e., you have a few really good results which brings mean above median)
+
+Skewness < 0: Then more weight in the right tail of the distribution. Observed when the distribution has a thicker left tail and mode>median>mean (i.e., you have a few really bad results which brings mean below median)
+
+# Importing scipy
+import scipy
+​
+# Importing library
+from scipy.stats import skew
+skew(df3, axis=0, bias=True)
+array([-0.14328359, -0.09478701, -0.50160547,  0.12743616, -0.43336805,
+       -0.63069128, -1.24051882, -0.87284954, -0.13675099, -0.27786022,
+        0.32029486])
+df2022 = df3.loc['2022-09-01':'2022-12-28'].round(2) # only consider data across specifc period
+df2022.set_axis(['S&P 500', 'NASDAQ', 'FTSE 100', 'DA Index', 'BTC', 'ETH','BNB', 'Ripple', 'Dogecoin', 'Cardano', 'Polygon'], axis=1, inplace=True)
+df2022
+S&P 500	NASDAQ	FTSE 100	DA Index	BTC	ETH	BNB	Ripple	Dogecoin	Cardano	Polygon
+Date											
+2022-09-01	0.00	-0.00	-0.02	-0.03	0.00	0.02	-0.00	0.02	1.59	0.02	0.06
+2022-09-02	-0.01	-0.01	0.02	0.00	-0.01	-0.01	-0.00	-0.01	1.56	-0.01	-0.02
+2022-09-06	-0.00	-0.01	0.00	-0.02	-0.05	-0.04	-0.05	-0.03	1.54	-0.08	-0.07
+2022-09-07	0.02	0.02	-0.01	0.02	0.02	0.04	0.06	0.05	1.62	0.03	0.03
+2022-09-08	0.01	0.01	0.00	0.02	0.00	0.00	0.01	0.01	1.58	-0.00	0.00
+...	...	...	...	...	...	...	...	...	...	...	...
+2022-12-20	0.00	0.00	0.00	0.00	0.03	0.04	0.04	0.03	1.51	0.02	0.04
+2022-12-21	0.02	0.02	0.02	0.00	-0.00	-0.00	-0.02	-0.01	1.46	-0.02	-0.01
+2022-12-22	-0.02	-0.02	-0.00	0.00	0.00	0.00	-0.00	0.01	1.49	0.01	0.00
+2022-12-23	0.01	0.00	0.00	0.01	-0.00	0.00	0.00	0.01	1.45	0.01	0.00
+2022-12-28	-0.01	-0.01	0.00	-0.01	-0.01	-0.02	-0.01	-0.03	1.46	-0.05	-0.03
+80 rows × 11 columns
+
+df8 = df3.drop(columns=['Dogecoin'])
+​
+fig = px.line(title = "Logarithmic returns of digital assets relative to benchmarks, log base (10)") # NOTE this is log prices NOT returns
+​
+x1 = df8.index
+​
+# Loop through each stock (while ignoring time columns with index 0)
+for stock in df8.columns[0:]:
+    fig.add_scatter(x = x1, y = df8[stock], name = stock)
+fig.show()
+Change in market integration
+df2022.corr()
+corr_matrix2022 = df2022.corr()
+f, ax = plt.subplots(figsize=(12, 10))
+​
+# Tidied correlation matrix
+​
+df2022_lt = corr_matrix2022.where(np.tril(np.ones(corr_matrix2022.shape)).astype(np.bool))
+​
+hmap=sns.heatmap(df2022_lt,cmap="Reds", annot=True).set_title('Correlation of cryptoassets with market benchmarks, 2022 Q4')
+C:\Users\edward.lyons\AppData\Local\Temp\ipykernel_19560\1723056236.py:7: DeprecationWarning:
+
+`np.bool` is a deprecated alias for the builtin `bool`. To silence this warning, use `bool` by itself. Doing this will not modify any behavior and is safe. If you specifically wanted the numpy scalar type, use `np.bool_` here.
+Deprecated in NumPy 1.20; for more details and guidance: https://numpy.org/devdocs/release/1.20.0-notes.html#deprecations
+
+
+Let us now review how correlation between digital assets and benchmarks have changed from Q4 2021 to 2022.
+
+df2021 = df3.loc['2021-09-01':'2021-12-20'].round(2) # only consider data across specifc period
+df2021.set_axis(['S&P 500', 'NASDAQ', 'FTSE 100', 'DA Index', 'BTC', 'ETH','BNB', 'Ripple', 'Dogecoin', 'Cardano', 'Polygon'], axis=1, inplace=True)
+df2021.corr().round(2)
+corr_matrix2021 = df2021.corr()
+f, ax = plt.subplots(figsize=(12, 10))
+# Tidied correlation matrix
+​
+df2021_lt = corr_matrix2021.where(np.tril(np.ones(corr_matrix2021.shape)).astype(np.bool))
+​
+hmap=sns.heatmap(df2021_lt,cmap="Reds", annot=True).set_title('Correlation of cryptoassets with market benchmarks, 2021 Q4')
+C:\Users\edward.lyons\AppData\Local\Temp\ipykernel_19560\2001368999.py:8: DeprecationWarning:
+
+`np.bool` is a deprecated alias for the builtin `bool`. To silence this warning, use `bool` by itself. Doing this will not modify any behavior and is safe. If you specifically wanted the numpy scalar type, use `np.bool_` here.
+Deprecated in NumPy 1.20; for more details and guidance: https://numpy.org/devdocs/release/1.20.0-notes.html#deprecations
+
+
+df10 = (corr_matrix2022 - corr_matrix2021).round(2)
+corr_matrix_diff = df10
+f, ax = plt.subplots(figsize=(12, 10))
+# Tidied correlation matrix
+​
+df10_lt = corr_matrix_diff.where(np.tril(np.ones(corr_matrix_diff.shape)).astype(np.bool))
+​
+hmap=sns.heatmap(df10_lt,cmap="Reds", annot=True).set_title('Correlation of cryptoassets with market benchmarks, Q4 2021-2022')
+C:\Users\edward.lyons\AppData\Local\Temp\ipykernel_19560\3103140394.py:6: DeprecationWarning:
+
+`np.bool` is a deprecated alias for the builtin `bool`. To silence this warning, use `bool` by itself. Doing this will not modify any behavior and is safe. If you specifically wanted the numpy scalar type, use `np.bool_` here.
+Deprecated in NumPy 1.20; for more details and guidance: https://numpy.org/devdocs/release/1.20.0-notes.html#deprecations
+
+
+# Let's focus on Benchmarks, BTC and ETH specifically
+for col in df2022.columns:
+    print(col)
+S&P 500
+NASDAQ
+FTSE 100
+DA Index
+BTC
+ETH
+BNB
+Ripple
+Dogecoin
+Cardano
+Polygon
+df_y = df2022.drop(columns=['BNB', 'Ripple', 'Dogecoin', 'Cardano', 'Polygon'])
+df_x = df2021.drop(columns=['BNB', 'Ripple', 'Dogecoin', 'Cardano','Polygon'])
+​
+​
+df_y.corr().round(2)
+corr_matrix_2022 = df_y.corr()
+​
+df_x.corr().round(2)
+corr_matrix_2021 = df_x.corr()
+​
+df4 = (corr_matrix_2022 - corr_matrix_2021).round(3)
+corr_matrix_diff_focussed = df4
+# Tidied correlation matrix
+​
+df_lt = corr_matrix_diff_focussed.where(np.tril(np.ones(corr_matrix_diff_focussed.shape)).astype(np.bool))
+f, ax = plt.subplots(figsize=(12, 10))
+hmap=sns.heatmap(df_lt,cmap="Reds", annot=True).set_title('Change in correlation of cryptoassets with market benchmarks, Q4 2021-2022')
+​
+# Get cmap colour options from: https://matplotlib.org/stable/gallery/color/colormap_reference.html
+C:\Users\edward.lyons\AppData\Local\Temp\ipykernel_19560\98740299.py:3: DeprecationWarning:
+
+`np.bool` is a deprecated alias for the builtin `bool`. To silence this warning, use `bool` by itself. Doing this will not modify any behavior and is safe. If you specifically wanted the numpy scalar type, use `np.bool_` here.
+Deprecated in NumPy 1.20; for more details and guidance: https://numpy.org/devdocs/release/1.20.0-notes.html#deprecations
+
+
+Weekly analysis
+df4 = df2.loc['2022-09-01':'2022-12-28'].round(2) # only consider data across specifc period
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib import rcParams
+rcParams['figure.figsize'] = 15,10
+  
+plt.plot(df4)
+plt.xlabel("Date")  # add X-axis label
+plt.ylabel("Price")  # add Y-axis label
+plt.title("Nominal Price $, W/cl 08/01/2023")  # add title
+plt.grid(True, color ='k', linestyle=':')
+plt.legend(df4)
+plt.show()
+
+Price volatility
+#!/usr/bin/python
+import warnings
+import datetime
+import numpy as np
+import pandas as pd
+import pandas_datareader.data as pdr
+import matplotlib.pyplot as plt
+​
+warnings.simplefilter('ignore', FutureWarning)
+# fetch multiple asset data
+def getMultiAssetData(ticketList, date_from):
+    def getData(ticker):
+        data = pdr.get_data_yahoo(ticker, date_from)
+        return data
+    datas = map(getData, tickerList)
+    return pd.concat(datas, keys=tickerList, names=['Ticker', 'Date'])
+date_from = datetime.date(2020, 1, 1)
+tickerList = ['BTC-USD','ETH-USD','BNB-USD', 'XRP-USD','DOGE-USD','ADA-USD','MATIC-USD']
+multiData = getMultiAssetData(tickerList, date_from)
+dfda = multiData.copy()
+​
+​
+date_from = datetime.date(2020, 1, 1)
+tickerList = ['^GSPC','^IXIC','^FTSE']
+md = getMultiAssetData(tickerList, date_from)
+dfbnch = md.copy()
+[*********************100%***********************]  1 of 1 completed
+[*********************100%***********************]  1 of 1 completed
+[*********************100%***********************]  1 of 1 completed
+[*********************100%***********************]  1 of 1 completed
+[*********************100%***********************]  1 of 1 completed
+[*********************100%***********************]  1 of 1 completed
+[*********************100%***********************]  1 of 1 completed
+[*********************100%***********************]  1 of 1 completed
+[*********************100%***********************]  1 of 1 completed
+[*********************100%***********************]  1 of 1 completed
+# use pivot to reshape DataFrame with only Close
+dfda = md.copy()
+dfx = dfbnch[['Close']]
+dfx = dfx.reset_index()
+dfx = dfx.pivot(index='Date', columns='Ticker', values='Close')
+dfx.rename({'^FTSE':'FTSE 100', '^GSPC':'S&P 500', '^IXIC':'Nasdaq'}, axis=1, inplace=True)
+dfx.head()
+Ticker	FTSE 100	S&P 500	Nasdaq
+Date			
+2020-01-02	7604.299805	3257.850098	9092.190430
+2020-01-03	7622.399902	3234.850098	9020.769531
+2020-01-06	7575.299805	3246.280029	9071.469727
+2020-01-07	7573.899902	3237.179932	9068.580078
+2020-01-08	7574.899902	3253.050049	9129.240234
+dfda = multiData.copy()
+dfy = dfda[['Close']]
+dfy= dfy.reset_index()
+dfy = dfy.pivot(index='Date', columns='Ticker', values='Close')
+dfy.rename({'ADA-USD':'Cardano','BNB-USD':'BNB','BTC-USD':'BTC','DOGE-USD':'Dogecoin','ETH-USD':'ETH','MATIC-USD':'Polygon','XRP-USD':'Ripple'}, axis=1, inplace=True)
+dfy.head()
+Ticker	Cardano	BNB	BTC	Dogecoin	ETH	Polygon	Ripple
+Date							
+2020-01-01	0.033458	13.689083	7200.174316	0.002033	130.802002	0.014962	0.192667
+2020-01-02	0.032751	13.027011	6985.470215	0.002009	127.410179	0.014651	0.188043
+2020-01-03	0.034180	13.660452	7344.884277	0.002145	134.171707	0.015194	0.193521
+2020-01-04	0.034595	13.891512	7410.656738	0.002241	135.069366	0.014961	0.194355
+2020-01-05	0.034721	14.111019	7411.317383	0.002419	136.276779	0.014914	0.195537
+# compute volatility using Pandas rolling and std methods, the trading days is set to 365 days
+# However, need to split DA from benchmarks due to fact former are operational 365 days a year
+TRADING_DAYS = 365
+returns_portfolio = np.log(dfy/dfy.shift(1))
+returns_portfolio.fillna(0, inplace=True)
+volatility_portfolio_da = returns_portfolio.rolling(window=TRADING_DAYS).std()*np.sqrt(TRADING_DAYS)
+volatility_portfolio_da.tail()
+Ticker	Cardano	BNB	BTC	Dogecoin	ETH	Polygon	Ripple
+Date							
+2023-01-26	0.886283	0.704605	0.637844	1.042010	0.851498	1.154427	0.841368
+2023-01-27	0.886132	0.703664	0.637788	1.041927	0.851325	1.154884	0.841152
+2023-01-28	0.886199	0.703619	0.637517	1.041957	0.849914	1.153648	0.841184
+2023-01-29	0.886970	0.704500	0.638289	1.042295	0.850969	1.153993	0.841274
+2023-01-30	0.887572	0.704524	0.638606	1.042927	0.851687	1.153836	0.841574
+TRADING_DAYS = 252
+returns_portfolio = np.log(dfx/dfx.shift(1))
+returns_portfolio.fillna(0, inplace=True)
+volatility_portfolio_bnch = returns_portfolio.rolling(window=TRADING_DAYS).std()*np.sqrt(TRADING_DAYS)
+volatility_portfolio_bnch.tail()
+Ticker	FTSE 100	S&P 500	Nasdaq
+Date			
+2023-01-24	0.158724	0.237863	0.310992
+2023-01-25	0.158614	0.237656	0.310936
+2023-01-26	0.158458	0.236690	0.309244
+2023-01-27	0.158449	0.236642	0.308974
+2023-01-30	0.158279	0.236619	0.308934
+%matplotlib inline
+fig = plt.figure(figsize=(15, 7))
+ax2 = fig.add_subplot(1, 1, 1)
+volatility_portfolio_bnch.plot(ax=ax2)
+volatility_portfolio_da.plot(ax=ax2)
+ax2.set_xlabel('Date')
+ax2.set_ylabel('Volatility')
+ax2.set_title('Annualised volatility of assets')
+plt.show()
+​
+# Note, rather than create new DF, can just do plt.plot(df['Column you want'])
+
+Measuring individual stocks
+# Three to fall this week: Coinbase, Silvergate & solance
+​
+date_from = datetime.date(2020, 1, 1)
+tickerList = ['COIN','SI','SOL-USD']
+multiData = getMultiAssetData(tickerList, date_from)
+dfnew = multiData.copy()
+[*********************100%***********************]  1 of 1 completed
+[*********************100%***********************]  1 of 1 completed
+[*********************100%***********************]  1 of 1 completed
+# use pivot to reshape DataFrame with only Close
+df9 = multiData.copy()
+df9 = df9[['Close']]
+df9 = df9.reset_index()
+df9 = df9.pivot(index='Date', columns='Ticker', values='Close')
+df9.rename({'COIN':'Coinbase', 'SI':'Silvergate Capital', 'SOL-USD':'Solano'}, axis=1, inplace=True)
+df9 =df9.dropna()
+df9.tail()
+Ticker	Coinbase	Silvergate Capital	Solano
+Date			
+2023-01-23	55.959999	16.030001	24.357807
+2023-01-24	53.560001	14.270000	22.795673
+2023-01-25	52.759998	14.460000	24.571445
+2023-01-26	53.020000	14.110000	24.350697
+2023-01-27	61.369999	13.580000	24.407858
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib import rcParams
+rcParams['figure.figsize'] = 15,10
+  
+plt.plot(df9)
+plt.xlabel("Date", fontsize = 20)  # add X-axis label
+plt.ylabel("Traded Price, $", fontsize = 20)  # add Y-axis label
+plt.title("Traded Price of digital assets, Q2 2021-present", fontsize = 22)  # add title
+plt.grid(True, color ='k', linestyle=':')
+plt.legend(df9)
+plt.legend(df9, fontsize = 20)
+​
+plt.show()
+
+df9.max()
+Ticker
+Coinbase              357.390015
+Silvergate Capital    222.130005
+Solano                248.467178
+dtype: float64
+df9.min()
+Ticker
+Coinbase              32.529999
+Silvergate Capital    11.550000
+Solano                 9.651783
+dtype: float64
+df10 = (df9.min()-df9.max())/df9.max().round(2)*100
+​
+print(df10)
+Ticker
+Coinbase             -90.897903
+Silvergate Capital   -94.800344
+Solano               -96.114378
+dtype: float64
+Incorporating simple moving averages
+df20 =df1.rolling(window=20).mean() # 20 day average
+list(df20)
+['S&P 500',
+ 'Nasdaq',
+ 'FTSE100',
+ 'DA Index',
+ 'BTC',
+ 'ETH',
+ 'USDT',
+ 'USDC',
+ 'BNB',
+ 'BUSD',
+ 'Ripple',
+ 'Dogecoin',
+ 'Cardano',
+ 'Polygon']
+df20.rename({'S&P 500':'S&P 500 20-day MA', 'Nasdaq': 'Nasdaq 20-day MA', 'FTSE100':'FTSE100 20-day MA', 'BTC':'BTC 20-day MA', 'ETH':'ETH 20-day MA','USDT':'USDT 20-day MA','USDC':'USDC 20-day MA','BNB':'BNB 20-day MA','BUSD': 'BUSD 20-day MA','Ripple':'Ripple 20-day MA','Dogecoin':'Dogecoin 20-day MA','Cardano':'Cardano 20-day MA','Polygon':'Polygon 20-day MA'}, axis=1, inplace=True)
+df20
+S&P 500 20-day MA	Nasdaq 20-day MA	FTSE100 20-day MA	DA Index	BTC 20-day MA	ETH 20-day MA	USDT 20-day MA	USDC 20-day MA	BNB 20-day MA	BUSD 20-day MA	Ripple 20-day MA	Dogecoin 20-day MA	Cardano 20-day MA	Polygon 20-day MA
+Date														
+2021-05-18	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN
+2021-05-19	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN
+2021-05-20	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN
+2021-05-21	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN
+2021-05-24	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN
+...	...	...	...	...	...	...	...	...	...	...	...	...	...	...
+2023-01-23	3898.6125	10718.0460	7657.015	5.37430	18373.95575	1353.67025	1.0	1.0	270.23795	1.00015	0.3652	0.07700	0.29835	0.86175
+2023-01-24	3905.5380	10749.2910	7670.020	5.41630	18664.90245	1370.82045	1.0	1.0	272.96620	1.00015	0.3683	0.07750	0.30365	0.86990
+2023-01-25	3915.2295	10791.1530	7683.800	5.45700	18979.27830	1390.49690	1.0	1.0	276.03705	1.00010	0.3717	0.07800	0.30945	0.87980
+2023-01-26	3926.0100	10841.8805	7698.205	5.49450	19291.06950	1409.64425	1.0	1.0	278.97300	1.00010	0.3745	0.07845	0.31550	0.89595
+2023-01-27	3940.3770	10912.3015	7711.605	5.54475	19617.37735	1430.05275	1.0	1.0	282.17205	1.00010	0.3773	0.07930	0.32255	0.91470
+417 rows × 14 columns
+
+df50 =df1.rolling(window=50).mean() # 20 day average
+df50.rename({'S&P 500':'S&P 500 50-day MA', 'Nasdaq': 'Nasdaq 50-day MA', 'FTSE100':'FTSE100 50-day MA', 'BTC':'BTC 50-day MA', 'ETH':'ETH 50-day MA','USDT':'USDT 50-day MA','USDC':'USDC 50-day MA','BNB':'BNB 50-day MA','BUSD': 'BUSD 50-day MA','Ripple':'Ripple 50-day MA','Dogecoin':'Dogecoin 50-day MA','Cardano':'Cardano 50-day MA','Polygon':'Polygon 50-day MA'}, axis=1, inplace=True)
+df50
+S&P 500 50-day MA	Nasdaq 50-day MA	FTSE100 50-day MA	DA Index	BTC 50-day MA	ETH 50-day MA	USDT 50-day MA	USDC 50-day MA	BNB 50-day MA	BUSD 50-day MA	Ripple 50-day MA	Dogecoin 50-day MA	Cardano 50-day MA	Polygon 50-day MA
+Date														
+2021-05-18	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN
+2021-05-19	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN
+2021-05-20	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN
+2021-05-21	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN
+2021-05-24	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN
+...	...	...	...	...	...	...	...	...	...	...	...	...	...	...
+2023-01-23	3932.7916	10928.6686	7523.822	5.61818	17490.33732	1282.55296	0.99974	1.00006	275.89914	1.00026	0.37576	0.08416	0.30860	0.88288
+2023-01-24	3936.5684	10943.0300	7532.848	5.60798	17572.24128	1287.02832	0.99974	1.00006	275.35758	1.00026	0.37580	0.08408	0.30834	0.88112
+2023-01-25	3941.9214	10962.2338	7541.820	5.60998	17716.98286	1297.25914	0.99976	1.00006	276.16668	1.00024	0.37750	0.08434	0.30944	0.88474
+2023-01-26	3944.0026	10970.1990	7549.536	5.60598	17825.90298	1303.33196	0.99980	1.00004	276.18242	1.00022	0.37778	0.08426	0.30966	0.88468
+2023-01-27	3945.5552	10976.1666	7558.480	5.59418	17946.79170	1309.55066	0.99984	1.00002	276.54846	1.00020	0.37836	0.08430	0.31034	0.88660
+417 rows × 14 columns
+
+df200 =df1.rolling(window=200).mean() # 20 day average
+​
+df200.rename({'S&P 500':'S&P 500 200-day MA', 'Nasdaq': 'Nasdaq 200-day MA', 'FTSE100':'FTSE100 200-day MA', 'BTC':'BTC 200-day MA', 'ETH':'ETH 200-day MA','USDT':'USDT 200-day MA','USDC':'USDC 200-day MA','BNB':'BNB 200-day MA','BUSD': 'BUSD 200-day MA','Ripple':'Ripple 200-day MA','Dogecoin':'Dogecoin 200-day MA','Cardano':'Cardano 200-day MA','Polygon':'Polygon 200-day MA'}, axis=1, inplace=True)
+df50
+S&P 500 50-day MA	Nasdaq 50-day MA	FTSE100 50-day MA	DA Index	BTC 50-day MA	ETH 50-day MA	USDT 50-day MA	USDC 50-day MA	BNB 50-day MA	BUSD 50-day MA	Ripple 50-day MA	Dogecoin 50-day MA	Cardano 50-day MA	Polygon 50-day MA
+Date														
+2021-05-18	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN
+2021-05-19	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN
+2021-05-20	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN
+2021-05-21	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN
+2021-05-24	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN	NaN
+...	...	...	...	...	...	...	...	...	...	...	...	...	...	...
+2023-01-23	3932.7916	10928.6686	7523.822	5.61818	17490.33732	1282.55296	0.99974	1.00006	275.89914	1.00026	0.37576	0.08416	0.30860	0.88288
+2023-01-24	3936.5684	10943.0300	7532.848	5.60798	17572.24128	1287.02832	0.99974	1.00006	275.35758	1.00026	0.37580	0.08408	0.30834	0.88112
+2023-01-25	3941.9214	10962.2338	7541.820	5.60998	17716.98286	1297.25914	0.99976	1.00006	276.16668	1.00024	0.37750	0.08434	0.30944	0.88474
+2023-01-26	3944.0026	10970.1990	7549.536	5.60598	17825.90298	1303.33196	0.99980	1.00004	276.18242	1.00022	0.37778	0.08426	0.30966	0.88468
+2023-01-27	3945.5552	10976.1666	7558.480	5.59418	17946.79170	1309.55066	0.99984	1.00002	276.54846	1.00020	0.37836	0.08430	0.31034	0.88660
+417 rows × 14 columns
+
+dfroll = pd.concat([df1,df20, df50, df200], axis=1).dropna()
+dfroll
+S&P 500	Nasdaq	FTSE100	DA Index	BTC	ETH	USDT	USDC	BNB	BUSD	...	BTC 200-day MA	ETH 200-day MA	USDT 200-day MA	USDC 200-day MA	BNB 200-day MA	BUSD 200-day MA	Ripple 200-day MA	Dogecoin 200-day MA	Cardano 200-day MA	Polygon 200-day MA
+Date																					
+2022-03-08	4170.70	12795.55	6964.1	12.010	38737.270	2576.748	1.000	1.000	381.959	1.000	...	45239.292850	3183.365695	1.000345	0.999970	428.345430	1.000060	0.901385	0.225700	1.637460	1.572140
+2022-03-09	4277.88	13255.55	7190.7	12.750	41982.926	2729.783	1.000	1.000	393.556	1.000	...	45234.660470	3180.114260	1.000340	0.999970	427.773100	1.000060	0.897265	0.223930	1.631685	1.567405
+2022-03-10	4259.52	13129.96	7099.1	12.750	39437.461	2608.049	1.001	1.000	372.159	0.999	...	45246.835570	3180.851110	1.000335	0.999970	427.938770	1.000055	0.895600	0.222850	1.628300	1.566305
+2022-03-11	4204.31	12843.81	7155.6	11.958	38794.973	2559.563	1.000	0.999	372.184	0.999	...	45236.896745	3179.727455	1.000325	0.999965	427.831625	1.000050	0.893680	0.221430	1.623200	1.564135
+2022-03-14	4173.11	12581.22	7193.5	11.320	39666.754	2590.696	1.000	1.000	373.466	1.001	...	45248.707060	3180.527830	1.000315	0.999965	428.067475	1.000055	0.892520	0.220205	1.619460	1.563615
+...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...
+2023-01-23	4019.81	11364.41	7784.7	5.740	22934.432	1628.251	1.000	1.000	305.504	1.000	...	23833.574800	1679.843835	0.999700	1.000035	296.361140	1.000175	0.434975	0.084085	0.500455	0.876840
+2023-01-24	4016.95	11334.27	7757.4	5.740	22636.469	1556.604	1.000	1.000	300.612	1.000	...	23711.117125	1670.943680	0.999700	1.000035	295.712245	1.000175	0.432700	0.083790	0.496400	0.873320
+2023-01-25	4016.22	11313.36	7744.9	5.740	23117.859	1611.711	1.000	1.000	307.308	1.000	...	23589.377770	1661.992295	0.999700	1.000035	295.076255	1.000180	0.430500	0.083505	0.492310	0.869915
+2023-01-26	4060.43	11512.41	7761.1	5.740	23032.777	1603.106	1.000	1.000	304.867	1.000	...	23469.228335	1653.082035	0.999700	1.000040	294.387165	1.000185	0.428245	0.083220	0.488260	0.867100
+2023-01-27	4070.56	11621.71	7765.2	5.740	23078.729	1598.156	1.000	1.000	308.123	1.000	...	23356.928600	1644.664600	0.999700	1.000045	293.783200	1.000180	0.426235	0.082965	0.484495	0.864805
+218 rows × 56 columns
+
+list(df20)
+['S&P 500 20-day MA',
+ 'Nasdaq 20-day MA',
+ 'FTSE100 20-day MA',
+ 'DA Index',
+ 'BTC 20-day MA',
+ 'ETH 20-day MA',
+ 'USDT 20-day MA',
+ 'USDC 20-day MA',
+ 'BNB 20-day MA',
+ 'BUSD 20-day MA',
+ 'Ripple 20-day MA',
+ 'Dogecoin 20-day MA',
+ 'Cardano 20-day MA',
+ 'Polygon 20-day MA']
+# Subset into benchmarks and BTC + Eth
+dfrollBTC = dfroll[['BTC','BTC 50-day MA','BTC 20-day MA', 'BTC 200-day MA']]
+dfrollETH = dfroll[['ETH','ETH 50-day MA','ETH 20-day MA']]
+frollBTC = dfrollBTC.rename({'BTC':'BTC Spot Price'}, axis=1, inplace=True)
+​
+rcParams['figure.figsize'] = 15,10
+plt.plot(dfrollBTC)
+plt.xlabel("Date", fontsize = 20)  # add X-axis label
+plt.ylabel("Traded Price, $", fontsize = 20)  # add Y-axis label
+plt.title("Traded Price of BTC incl simple moving averages, Q2 2021-present", fontsize = 22)  # add title
+plt.grid(True, color ='k', linestyle=':')
+plt.legend(dfrollBTC)
+plt.legend(dfrollBTC, fontsize = 20)
+​
+plt.show()
+
+rcParams['figure.figsize'] = 15,10
+plt.plot(dfrollETH)
+plt.xlabel("Date", fontsize = 20)  # add X-axis label
+plt.ylabel("Traded Price, $", fontsize = 20)  # add Y-axis label
+plt.title("Traded Price of ETH incl. SMA, Q2 2021-present", fontsize = 22)  # add title
+plt.grid(True, color ='k', linestyle=':')
+plt.legend(dfrollETH)
+plt.legend(dfrollETH, fontsize = 20)
+​
+plt.show()
+
+# compute volatility using Pandas rolling and std methods, the trading days is set to 365 days
+TRADING_DAYS = 252
+​
+returns = np.log(dfrollBTC['BTC Spot Price']/dfrollBTC['BTC Spot Price'].shift(1))
+returns.fillna(0, inplace=True)
+volatility = returns.rolling(window=TRADING_DAYS).std()*np.sqrt(TRADING_DAYS)
+​
+fig = plt.figure(figsize=(15, 7))
+ax1 = fig.add_subplot(1, 1, 1)
+volatility.plot(ax=ax1)
+ax1.set_xlabel('Date')
+ax1.set_ylabel('Volatility')
+ax1.set_title('Annualized volatility for Bitcoin')
+plt.show()
+
+# compute volatility using Pandas rolling and std methods, the trading days is set to 365 days
+TRADING_DAYS = 256
+returns = np.log(dfroll['S&P 500']/dfroll['S&P 500'].shift(1))
+returns.fillna(0, inplace=True)
+volatility.SP = returns.rolling(window=TRADING_DAYS).std()*np.sqrt(TRADING_DAYS)
+​
+fig = plt.figure(figsize=(15, 7))
+ax1 = fig.add_subplot(1, 1, 1)
+volatility.SP.plot(ax=ax1)
+ax1.set_xlabel('Date')
+ax1.set_ylabel('Volatility')
+ax1.set_title('Annualized volatility for S&P 500')
+plt.show()
+
+fig, axes = plt.subplots(1, 2, figsize=(30, 10))
+​
+axes[0].plot(volatility)
+axes[1].plot(volatility.SP);
+
+import matplotlib.pyplot as plt
+import numpy as np
+​
+from datetime import datetime, timedelta
+fig, ax1 = plt.subplots(figsize=(8, 8))
+ax2 = ax1.twinx()
+​
+ax1.plot(dfrollBTC['BTC'])
+ax2.plot(volatility);
+---------------------------------------------------------------------------
+KeyError                                  Traceback (most recent call last)
+File ~\Anaconda3\lib\site-packages\pandas\core\indexes\base.py:3621, in Index.get_loc(self, key, method, tolerance)
+   3620 try:
+-> 3621     return self._engine.get_loc(casted_key)
+   3622 except KeyError as err:
+
+File ~\Anaconda3\lib\site-packages\pandas\_libs\index.pyx:136, in pandas._libs.index.IndexEngine.get_loc()
+
+File ~\Anaconda3\lib\site-packages\pandas\_libs\index.pyx:163, in pandas._libs.index.IndexEngine.get_loc()
+
+File pandas\_libs\hashtable_class_helper.pxi:5198, in pandas._libs.hashtable.PyObjectHashTable.get_item()
+
+File pandas\_libs\hashtable_class_helper.pxi:5206, in pandas._libs.hashtable.PyObjectHashTable.get_item()
+
+KeyError: 'BTC'
+
+The above exception was the direct cause of the following exception:
+
+KeyError                                  Traceback (most recent call last)
+Input In [121], in <cell line: 4>()
+      1 fig, ax1 = plt.subplots(figsize=(8, 8))
+      2 ax2 = ax1.twinx()
+----> 4 ax1.plot(dfrollBTC['BTC'])
+      5 ax2.plot(volatility)
+
+File ~\Anaconda3\lib\site-packages\pandas\core\frame.py:3505, in DataFrame.__getitem__(self, key)
+   3503 if self.columns.nlevels > 1:
+   3504     return self._getitem_multilevel(key)
+-> 3505 indexer = self.columns.get_loc(key)
+   3506 if is_integer(indexer):
+   3507     indexer = [indexer]
+
+File ~\Anaconda3\lib\site-packages\pandas\core\indexes\base.py:3623, in Index.get_loc(self, key, method, tolerance)
+   3621     return self._engine.get_loc(casted_key)
+   3622 except KeyError as err:
+-> 3623     raise KeyError(key) from err
+   3624 except TypeError:
+   3625     # If we have a listlike key, _check_indexing_error will raise
+   3626     #  InvalidIndexError. Otherwise we fall through and re-raise
+   3627     #  the TypeError.
+   3628     self._check_indexing_error(key)
+
+KeyError: 'BTC'
+
+
+Color_Price = "#69b3a2"
+Color_Volatility = "#3399e6"
+​
+fig, ax1 = plt.subplots(figsize=(8, 8))
+ax2 = ax1.twinx()
+​
+ax1.plot(dfrollBTC['BTC'], color=Color_Price, lw=3)
+ax2.plot(volatility, color=Color_Volatility, lw=4)
+​
+ax1.set_xlabel("Date")
+ax1.set_ylabel("Price, $", color=Color_Price, fontsize=14)
+ax1.tick_params(axis="y", labelcolor=Color_Price)
+​
+ax2.set_ylabel("Annualised Volatility", color=Color_Volatility,fontsize=14)
+ax2.tick_params(axis="y", labelcolor=Color_Volatility)
+​
+fig.suptitle("Relationship between BTC price and BTC annualised volatility", fontsize=20)
+fig.autofmt_xdate()
+
+# For week 23/01
+df9['Silvergate Rolling 20']= df9['Silvergate Capital'].rolling(window=20).mean() # 20 day average
+df9['Silvergate Rolling 50']= df9['Silvergate Capital'].rolling(window=50).mean() # 20 day average
+silvergate = df9[['Silvergate Capital','Silvergate Rolling 20',  'Silvergate Rolling 50']]
+​
+silvergate
+Ticker	Silvergate Capital	Silvergate Rolling 20	Silvergate Rolling 50
+Date			
+2021-04-14	141.320007	NaN	NaN
+2021-04-15	139.089996	NaN	NaN
+2021-04-16	133.000000	NaN	NaN
+2021-04-19	125.080002	NaN	NaN
+2021-04-20	120.639999	NaN	NaN
+...	...	...	...
+2023-01-23	16.030001	14.6715	20.8584
+2023-01-24	14.270000	14.5530	20.4500
+2023-01-25	14.460000	14.4535	20.0856
+2023-01-26	14.110000	14.3705	19.6794
+2023-01-27	13.580000	14.2505	19.2412
+452 rows × 3 columns
+
+rcParams['figure.figsize'] = 15,10
+plt.plot(silvergate)
+plt.xlabel("Date", fontsize = 20)  # add X-axis label
+plt.ylabel("Traded Price, $", fontsize = 20)  # add Y-axis label
+plt.title("Traded Price of Silvergate Capital incl SMA, Q2 2021-present", fontsize = 22)  # add title
+plt.grid(True, color ='k', linestyle=':')
+plt.legend(silvergate)
+plt.legend(silvergate, fontsize = 20)
+​
+plt.show()
+
+max_sg = silvergate['Silvergate Capital'].max()
+max_sg
+222.1300048828125
+min_sg = silvergate['Silvergate Capital'].min()
+min_sg
+11.550000190734863
+pct = (max_sg-min_sg)/max_sg
+pct
+0.9480034217042033
