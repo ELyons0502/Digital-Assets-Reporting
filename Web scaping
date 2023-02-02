@@ -1,0 +1,729 @@
+Digital assets newsletter: Data Scraping from TradeView
+Download Packages
+
+import numpy as np
+import pandas as pd
+from bs4 import BeautifulSoup
+import requests
+Download Data
+
+page_to_scrape = requests.get("https://www.tradingview.com/markets/cryptocurrencies/prices-all/")
+soup = BeautifulSoup(page_to_scrape.text, "html.parser")
+shorthand = soup.findAll("a", attrs={"class":"apply-common-tooltip tickerNameBox-hMpTPJiS tickerName-hMpTPJiS"})
+shorthand = [elt.text for elt in shorthand] # convert the bs4 object into a string of text that can be used
+​
+full_name = soup.findAll("sup", attrs={"class":"apply-common-tooltip tickerDescription-hMpTPJiS"})
+full_name = [elt.text for elt in full_name]
+shorthand
+​
+['BTC',
+ 'ETH',
+ 'USDT',
+ 'BNB',
+ 'USDC',
+ 'XRP',
+ 'BUSD',
+ 'ADA',
+ 'DOGE',
+ 'MATIC',
+ 'SOL',
+ 'DOT',
+ 'LTC',
+ 'AVAX',
+ 'SHIB',
+ 'DAI',
+ 'TRX',
+ 'UNI',
+ 'WBTC',
+ 'ATOM',
+ 'LINK',
+ 'XMR',
+ 'LEO',
+ 'ETC',
+ 'APT',
+ 'TON',
+ 'BCH',
+ 'XLM',
+ 'OKB',
+ 'APE',
+ 'NEAR',
+ 'CRO',
+ 'FIL',
+ 'ALGO',
+ 'LDO',
+ 'QNT',
+ 'VET',
+ 'ICP',
+ 'HBAR',
+ 'MANA',
+ 'FTM',
+ 'BIT',
+ 'AAVE',
+ 'EOS',
+ 'AXS',
+ 'SAND',
+ 'EGLD',
+ 'FLOW',
+ 'THETA',
+ 'XTZ',
+ 'LUNC',
+ 'TUSD',
+ 'CHZ',
+ 'USDP',
+ 'BSV',
+ 'HT',
+ 'KCS',
+ 'GRT',
+ 'FXS',
+ 'CRV',
+ 'ZEC',
+ 'USDD',
+ 'MINA',
+ 'CAKE',
+ 'BTT',
+ 'XEC',
+ 'TWT',
+ 'KLAY',
+ 'MIOTA',
+ 'MKR',
+ 'DASH',
+ 'RUNE',
+ 'SNX',
+ 'GUSD',
+ 'NEO',
+ 'IMX',
+ 'OP',
+ 'PAXG',
+ 'GMX',
+ 'OSMO',
+ 'GT',
+ 'LRC',
+ 'NEXO',
+ 'CVX',
+ 'ENJ',
+ 'ZIL',
+ 'LUNA',
+ '1INCH',
+ 'ETHW',
+ 'FEI',
+ 'RPL',
+ 'COMP',
+ 'GALA',
+ 'HNT',
+ 'KAVA',
+ 'BAT',
+ 'CSPR',
+ 'STX',
+ 'T',
+ 'HOT']
+Creating DataFrames
+d = {'Digital Asset':full_name,'Shorthand':shorthand}
+​
+df1 = pd.DataFrame(d)
+df1
+Digital Asset	Shorthand
+0	Bitcoin	BTC
+1	Ethereum	ETH
+2	Tether	USDT
+3	BNB	BNB
+4	USD Coin	USDC
+...	...	...
+95	Basic Attention Token	BAT
+96	Casper	CSPR
+97	Stacks	STX
+98	Threshold	T
+99	Holo	HOT
+100 rows × 2 columns
+
+Market_cap = soup.findAll("td", attrs={"class":"cell-TKkxf89L right-TKkxf89L"})
+Market_cap = [elt.text for elt in Market_cap]
+​
+df = pd.DataFrame(Market_cap, columns=['Market_cap'])
+df
+Market_cap
+0	1
+1	23587.06USD
+2	1.74%
+3	454.679BUSD
+4	26.243BUSD
+...	...
+595	0.00218002USD
+596	−0.41%
+597	377.891MUSD
+598	18.443MUSD
+599	173.343B
+600 rows × 1 columns
+
+df2 = (pd.DataFrame(np.reshape(df.values,(df.shape[0] // 6,6)), 
+                    columns=['Rank','Price','Price Chg % 24h','Market Cap','Vol in USD 24h', 'Supply']))
+df_digital_assets = pd.concat([df1,df2], axis=1)
+df_digital_assets.head(10)
+Digital Asset	Shorthand	Rank	Price	Price Chg % 24h	Market Cap	Vol in USD 24h	Supply
+0	Bitcoin	BTC	1	23587.06USD	1.74%	454.679BUSD	26.243BUSD	19.277M
+1	Ethereum	ETH	2	1622.13USD	1.89%	195.544BUSD	8.202BUSD	120.548M
+2	Tether	USDT	3	1.00020000USD	0.01%	67.633BUSD	32.985BUSD	67.619B
+3	BNB	BNB	4	311.0488USD	0.19%	49.115BUSD	673.656MUSD	157.902M
+4	USD Coin	USDC	5	1.000120USD	0.03%	43.107BUSD	2.843BUSD	43.102B
+5	XRP	XRP	6	0.41052USD	−0.08%	20.856BUSD	823.38MUSD	50.804B
+6	Binance USD	BUSD	7	1.001695USD	0.09%	15.792BUSD	9.513BUSD	15.765B
+7	Cardano	ADA	8	0.388637USD	0.64%	13.444BUSD	325.812MUSD	34.594B
+8	Dogecoin	DOGE	9	0.08812250USD	−0.78%	11.691BUSD	471.654MUSD	132.671B
+9	Polygon	MATIC	10	1.1494USD	−0.21%	10.039BUSD	568.279MUSD	8.734B
+# Make rank index
+df_digital_assets.set_index('Rank', inplace=True)
+# Get rid of columns not needed
+df_final = df_digital_assets.drop(columns=['Vol in USD 24h', 'Supply'])
+# Clean data
+df_final['Price'] = df_final['Price'].str.replace('USD', '')
+df_final['Price Chg % 24h'] = df_final['Price Chg % 24h'].str.replace('%', '')
+df_final
+Digital Asset	Shorthand	Price	Price Chg % 24h	Market Cap
+Rank					
+1	Bitcoin	BTC	23587.06	1.74	454.679BUSD
+2	Ethereum	ETH	1622.13	1.89	195.544BUSD
+3	Tether	USDT	1.00020000	0.01	67.633BUSD
+4	BNB	BNB	311.0488	0.19	49.115BUSD
+5	USD Coin	USDC	1.000120	0.03	43.107BUSD
+...	...	...	...	...	...
+96	Basic Attention Token	BAT	0.26295720	−2.38	391.838MUSD
+97	Casper	CSPR	0.036465	2.34	390.687MUSD
+98	Stacks	STX	0.28738286	0.02	390.367MUSD
+99	Threshold	T	0.04506	0.11	382.331MUSD
+100	Holo	HOT	0.00218002	−0.41	377.891MUSD
+100 rows × 5 columns
+
+Converting Values
+To recalculate Market Cap to account for fact that the nominal figures do not differentiate between 𝐵𝑛𝑎𝑛𝑑
+Ml, I need to use the create two new DFs using the "contains" function and process values accordingly
+
+df_Bn = df_final[df_final['Market Cap'].str.contains("BUSD")]
+df_Mn = df_final[df_final['Market Cap'].str.contains("MUSD")]
+Now, let's make convert values from objects to floats in each DF
+
+df_Bn['Market Cap'] = df_Bn['Market Cap'].str.replace('BUSD', '')
+​
+df_Bn['Price'] = df_Bn['Price'].astype(float)
+df_Bn['Market Cap'] = df_Bn['Market Cap'].astype(float)
+df_Bn
+C:\Users\edward.lyons\AppData\Local\Temp\ipykernel_32292\902932732.py:1: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  df_Bn['Market Cap'] = df_Bn['Market Cap'].str.replace('BUSD', '')
+C:\Users\edward.lyons\AppData\Local\Temp\ipykernel_32292\902932732.py:3: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  df_Bn['Price'] = df_Bn['Price'].astype(float)
+C:\Users\edward.lyons\AppData\Local\Temp\ipykernel_32292\902932732.py:4: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  df_Bn['Market Cap'] = df_Bn['Market Cap'].astype(float)
+Digital Asset	Shorthand	Price	Price Chg % 24h	Market Cap
+Rank					
+1	Bitcoin	BTC	23587.060000	1.74	454.679
+2	Ethereum	ETH	1622.130000	1.89	195.544
+3	Tether	USDT	1.000200	0.01	67.633
+4	BNB	BNB	311.048800	0.19	49.115
+5	USD Coin	USDC	1.000120	0.03	43.107
+6	XRP	XRP	0.410520	−0.08	20.856
+7	Binance USD	BUSD	1.001695	0.09	15.792
+8	Cardano	ADA	0.388637	0.64	13.444
+9	Dogecoin	DOGE	0.088123	−0.78	11.691
+10	Polygon	MATIC	1.149400	−0.21	10.039
+11	Solana	SOL	25.274300	4.75	9.393
+12	Polkadot	DOT	6.460700	−0.47	7.441
+13	Litecoin	LTC	93.261844	−1.99	6.731
+14	Avalanche	AVAX	20.982448	2.76	6.605
+15	Shiba Inu	SHIB	0.000012	0.00	6.545
+16	Dai	DAI	0.999353	−0.03	5.834
+17	TRON	TRX	0.062950	−0.58	5.780
+18	Uniswap	UNI	6.763466	−0.27	5.155
+19	Wrapped Bitcoin	WBTC	23536.397400	1.59	4.158
+20	Cosmos	ATOM	13.590359	1.97	3.892
+21	Chainlink	LINK	7.213598	−1.80	3.665
+22	Monero	XMR	186.448237	1.72	3.400
+23	UNUS SED LEO	LEO	3.553000	−4.32	3.389
+24	Ethereum Classic	ETC	22.589748	1.58	3.144
+25	Aptos	APT	19.919213	9.52	3.193
+26	Toncoin	TON	2.398200	−3.44	2.929
+27	Bitcoin Cash	BCH	135.158790	−0.53	2.608
+28	Stellar	XLM	0.093355	0.38	2.453
+29	OKB	OKB	38.061000	−3.39	2.284
+30	ApeCoin	APE	6.250843	3.36	2.304
+31	NEAR Protocol	NEAR	2.502491	−1.23	2.131
+32	Cronos	CRO	0.080700	−0.49	2.039
+33	Filecoin	FIL	5.327882	−0.13	1.993
+34	Algorand	ALGO	0.253698	−1.34	1.826
+35	Lido DAO	LDO	2.214909	−1.93	1.825
+36	Quant	QNT	147.537361	−2.10	1.781
+37	VeChain	VET	0.024136	−1.59	1.750
+38	Internet Computer	ICP	6.093000	0.48	1.734
+39	Hedera	HBAR	0.067892	0.27	1.719
+40	Decentraland	MANA	0.784179	7.88	1.455
+41	Fantom	FTM	0.478775	2.42	1.328
+42	BitDAO	BIT	0.561100	−2.59	1.173
+43	Aave	AAVE	85.023049	−1.29	1.198
+44	EOS	EOS	1.095404	−0.70	1.184
+45	Axie Infinity	AXS	11.756324	1.92	1.188
+46	The Sandbox	SAND	0.773420	3.39	1.160
+47	Elrond	EGLD	44.724393	0.02	1.107
+48	Flow	FLOW	1.073944	−0.32	1.113
+49	Theta Network	THETA	1.079420	−1.60	1.079
+50	Tezos	XTZ	1.130603	−3.18	1.046
+51	Terra Classic	LUNC	0.000173	0.34	1.032
+df_Mn['Market Cap'] = df_Mn['Market Cap'].str.replace('MUSD', '')
+​
+df_Mn['Price'] = df_Mn['Price'].astype(float)
+df_Mn['Market Cap'] = df_Mn['Market Cap'].astype(float)
+df_Mn
+C:\Users\edward.lyons\AppData\Local\Temp\ipykernel_32292\1930836996.py:1: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  df_Mn['Market Cap'] = df_Mn['Market Cap'].str.replace('MUSD', '')
+C:\Users\edward.lyons\AppData\Local\Temp\ipykernel_32292\1930836996.py:3: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  df_Mn['Price'] = df_Mn['Price'].astype(float)
+C:\Users\edward.lyons\AppData\Local\Temp\ipykernel_32292\1930836996.py:4: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  df_Mn['Market Cap'] = df_Mn['Market Cap'].astype(float)
+Digital Asset	Shorthand	Price	Price Chg % 24h	Market Cap
+Rank					
+52	TrueUSD	TUSD	9.993700e-01	0.04	943.772
+53	Chiliz	CHZ	1.392440e-01	1.33	927.589
+54	Pax Dollar	USDP	1.001590e+00	−0.20	879.480
+55	Bitcoin SV	BSV	4.347000e+01	−1.16	837.500
+56	Huobi Token	HT	5.139600e+00	0.16	833.817
+57	KuCoin Token	KCS	8.297000e+00	2.07	816.258
+58	The Graph	GRT	9.296656e-02	−0.66	815.450
+59	Frax Share	FXS	1.063211e+01	−2.73	779.102
+60	Curve DAO Token	CRV	1.067528e+00	−1.31	750.926
+61	Zcash	ZEC	4.585406e+01	−2.49	745.057
+62	USDD	USDD	9.917900e-01	0.33	719.377
+63	Mina	MINA	8.769708e-01	34.19	721.189
+64	PancakeSwap	CAKE	4.074624e+00	1.06	705.995
+65	BitTorrent-New	BTT	7.400000e-07	1.37	704.052
+66	eCash	XEC	3.613000e-05	−2.32	697.095
+67	Trust Wallet Token	TWT	1.663609e+00	−3.99	693.143
+68	Klaytn	KLAY	2.143573e-01	0.54	662.099
+69	IOTA	MIOTA	2.370870e-01	0.07	658.991
+70	Maker	MKR	6.710018e+02	1.01	655.992
+71	Dash	DASH	5.724976e+01	0.54	636.652
+72	THORChain	RUNE	1.851524e+00	−1.07	605.553
+73	Synthetix	SNX	2.436917e+00	−0.13	608.482
+74	Gemini Dollar	GUSD	9.983490e-01	0.00	606.048
+75	Neo	NEO	8.238861e+00	−0.67	581.160
+76	Immutable X	IMX	7.023495e-01	6.21	557.490
+77	Optimism	OP	2.310929e+00	5.42	542.487
+78	PAX Gold	PAXG	1.905670e+03	−0.22	516.939
+79	GMX	GMX	5.899694e+01	4.95	497.093
+80	Osmosis	OSMO	1.017714e+00	5.21	501.317
+81	GateToken	GT	4.435600e+00	4.83	480.221
+82	Loopring	LRC	3.494768e-01	11.52	464.851
+83	Nexo	NEXO	8.371709e-01	−0.26	468.816
+84	Convex Finance	CVX	6.043113e+00	2.28	447.670
+85	Enjin Coin	ENJ	4.556368e-01	0.54	455.637
+86	Zilliqa	ZIL	2.851709e-02	−2.65	452.501
+87	Terra	LUNA	2.118500e+00	−0.46	437.841
+88	1inch Network	1INCH	5.254941e-01	−0.78	418.986
+89	ETHPoW (IOU)	ETHW	3.879300e+00	−0.12	418.266
+90	Fei USD	FEI	9.777500e-01	−0.03	415.540
+91	Rocket Pool	RPL	3.943062e+01	0.40	405.337
+92	Compound	COMP	5.558242e+01	−1.44	403.926
+93	Gala	GALA	5.835113e-02	1.46	407.128
+94	Helium	HNT	2.890600e+00	−1.00	396.841
+95	Kava	KAVA	1.005018e+00	−0.08	395.939
+96	Basic Attention Token	BAT	2.629572e-01	−2.38	391.838
+97	Casper	CSPR	3.646500e-02	2.34	390.687
+98	Stacks	STX	2.873829e-01	0.02	390.367
+99	Threshold	T	4.506000e-02	0.11	382.331
+100	Holo	HOT	2.180020e-03	−0.41	377.891
+Now, convert values in df_Mn['Market Cap'] to $Bn
+
+df_Mn['Market Cap'] = df_Mn['Market Cap']/1000
+df_Mn
+C:\Users\edward.lyons\AppData\Local\Temp\ipykernel_32292\805046233.py:1: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  df_Mn['Market Cap'] = df_Mn['Market Cap']/1000
+Digital Asset	Shorthand	Price	Price Chg % 24h	Market Cap
+Rank					
+52	TrueUSD	TUSD	9.993700e-01	0.04	0.943772
+53	Chiliz	CHZ	1.392440e-01	1.33	0.927589
+54	Pax Dollar	USDP	1.001590e+00	−0.20	0.879480
+55	Bitcoin SV	BSV	4.347000e+01	−1.16	0.837500
+56	Huobi Token	HT	5.139600e+00	0.16	0.833817
+57	KuCoin Token	KCS	8.297000e+00	2.07	0.816258
+58	The Graph	GRT	9.296656e-02	−0.66	0.815450
+59	Frax Share	FXS	1.063211e+01	−2.73	0.779102
+60	Curve DAO Token	CRV	1.067528e+00	−1.31	0.750926
+61	Zcash	ZEC	4.585406e+01	−2.49	0.745057
+62	USDD	USDD	9.917900e-01	0.33	0.719377
+63	Mina	MINA	8.769708e-01	34.19	0.721189
+64	PancakeSwap	CAKE	4.074624e+00	1.06	0.705995
+65	BitTorrent-New	BTT	7.400000e-07	1.37	0.704052
+66	eCash	XEC	3.613000e-05	−2.32	0.697095
+67	Trust Wallet Token	TWT	1.663609e+00	−3.99	0.693143
+68	Klaytn	KLAY	2.143573e-01	0.54	0.662099
+69	IOTA	MIOTA	2.370870e-01	0.07	0.658991
+70	Maker	MKR	6.710018e+02	1.01	0.655992
+71	Dash	DASH	5.724976e+01	0.54	0.636652
+72	THORChain	RUNE	1.851524e+00	−1.07	0.605553
+73	Synthetix	SNX	2.436917e+00	−0.13	0.608482
+74	Gemini Dollar	GUSD	9.983490e-01	0.00	0.606048
+75	Neo	NEO	8.238861e+00	−0.67	0.581160
+76	Immutable X	IMX	7.023495e-01	6.21	0.557490
+77	Optimism	OP	2.310929e+00	5.42	0.542487
+78	PAX Gold	PAXG	1.905670e+03	−0.22	0.516939
+79	GMX	GMX	5.899694e+01	4.95	0.497093
+80	Osmosis	OSMO	1.017714e+00	5.21	0.501317
+81	GateToken	GT	4.435600e+00	4.83	0.480221
+82	Loopring	LRC	3.494768e-01	11.52	0.464851
+83	Nexo	NEXO	8.371709e-01	−0.26	0.468816
+84	Convex Finance	CVX	6.043113e+00	2.28	0.447670
+85	Enjin Coin	ENJ	4.556368e-01	0.54	0.455637
+86	Zilliqa	ZIL	2.851709e-02	−2.65	0.452501
+87	Terra	LUNA	2.118500e+00	−0.46	0.437841
+88	1inch Network	1INCH	5.254941e-01	−0.78	0.418986
+89	ETHPoW (IOU)	ETHW	3.879300e+00	−0.12	0.418266
+90	Fei USD	FEI	9.777500e-01	−0.03	0.415540
+91	Rocket Pool	RPL	3.943062e+01	0.40	0.405337
+92	Compound	COMP	5.558242e+01	−1.44	0.403926
+93	Gala	GALA	5.835113e-02	1.46	0.407128
+94	Helium	HNT	2.890600e+00	−1.00	0.396841
+95	Kava	KAVA	1.005018e+00	−0.08	0.395939
+96	Basic Attention Token	BAT	2.629572e-01	−2.38	0.391838
+97	Casper	CSPR	3.646500e-02	2.34	0.390687
+98	Stacks	STX	2.873829e-01	0.02	0.390367
+99	Threshold	T	4.506000e-02	0.11	0.382331
+100	Holo	HOT	2.180020e-03	−0.41	0.377891
+Now, let's merge dataframes
+
+df_digital_assets = pd.concat([df_Bn,df_Mn])
+df_digital_assets
+Digital Asset	Shorthand	Price	Price Chg % 24h	Market Cap
+Rank					
+1	Bitcoin	BTC	23587.060000	1.74	454.679000
+2	Ethereum	ETH	1622.130000	1.89	195.544000
+3	Tether	USDT	1.000200	0.01	67.633000
+4	BNB	BNB	311.048800	0.19	49.115000
+5	USD Coin	USDC	1.000120	0.03	43.107000
+...	...	...	...	...	...
+96	Basic Attention Token	BAT	0.262957	−2.38	0.391838
+97	Casper	CSPR	0.036465	2.34	0.390687
+98	Stacks	STX	0.287383	0.02	0.390367
+99	Threshold	T	0.045060	0.11	0.382331
+100	Holo	HOT	0.002180	−0.41	0.377891
+100 rows × 5 columns
+
+Tidy and add additional outputs
+df_digital_assets.rename({'Price': 'Price $', 'Market Cap': 'Market Cap $Bn'}, axis=1, inplace=True)
+df_digital_assets['Price $'] = df_digital_assets['Price $'].round(3)
+df_digital_assets['Market Cap $Bn'] = df_digital_assets['Market Cap $Bn'].round(2)
+df_digital_assets
+Digital Asset	Shorthand	Price $	Price Chg % 24h	Market Cap $Bn
+Rank					
+1	Bitcoin	BTC	23587.060	1.74	454.68
+2	Ethereum	ETH	1622.130	1.89	195.54
+3	Tether	USDT	1.000	0.01	67.63
+4	BNB	BNB	311.049	0.19	49.12
+5	USD Coin	USDC	1.000	0.03	43.11
+...	...	...	...	...	...
+96	Basic Attention Token	BAT	0.263	−2.38	0.39
+97	Casper	CSPR	0.036	2.34	0.39
+98	Stacks	STX	0.287	0.02	0.39
+99	Threshold	T	0.045	0.11	0.38
+100	Holo	HOT	0.002	−0.41	0.38
+100 rows × 5 columns
+
+Now, let's calculate the total value of cryptomarket so to calculate Bitcoin Dominance (BTCD)
+
+Industry = df_digital_assets['Market Cap $Bn'].sum().round(2) # total value of cryptomarket
+Industry
+1032.28
+last_week = 1001
+pct_change = ((Industry-last_week)/last_week)*100 # permanent code for weekly % change
+pct_change
+3.124875124875122
+pct_share = ((df_digital_assets['Market Cap $Bn'].div(Industry))*100).round(2).astype(str) + '%'
+​
+df_pct_share = pd.DataFrame(pct_share)
+df_pct_share.rename({'Market Cap $Bn':'Crypto Assets Market Share'}, axis=1, inplace=True)
+df_summary = pd.concat([df_digital_assets,df_pct_share], axis=1)
+df_summary.head(10)
+Digital Asset	Shorthand	Price $	Price Chg % 24h	Market Cap $Bn	Crypto Assets Market Share
+Rank						
+1	Bitcoin	BTC	23587.060	1.74	454.68	44.05%
+2	Ethereum	ETH	1622.130	1.89	195.54	18.94%
+3	Tether	USDT	1.000	0.01	67.63	6.55%
+4	BNB	BNB	311.049	0.19	49.12	4.76%
+5	USD Coin	USDC	1.000	0.03	43.11	4.18%
+6	XRP	XRP	0.411	−0.08	20.86	2.02%
+7	Binance USD	BUSD	1.002	0.09	15.79	1.53%
+8	Cardano	ADA	0.389	0.64	13.44	1.3%
+9	Dogecoin	DOGE	0.088	−0.78	11.69	1.13%
+10	Polygon	MATIC	1.149	−0.21	10.04	0.97%
+Let's add timestamp for purposes of accuracy
+
+df_summary['date_time'] = pd.datetime.now().date()
+df_summary.head(10)
+C:\Users\edward.lyons\AppData\Local\Temp\ipykernel_32292\2734451872.py:1: FutureWarning: The pandas.datetime class is deprecated and will be removed from pandas in a future version. Import from datetime module instead.
+  df_summary['date_time'] = pd.datetime.now().date()
+Digital Asset	Shorthand	Price $	Price Chg % 24h	Market Cap $Bn	Crypto Assets Market Share	date_time
+Rank							
+1	Bitcoin	BTC	23587.060	1.74	454.68	44.05%	2023-01-30
+2	Ethereum	ETH	1622.130	1.89	195.54	18.94%	2023-01-30
+3	Tether	USDT	1.000	0.01	67.63	6.55%	2023-01-30
+4	BNB	BNB	311.049	0.19	49.12	4.76%	2023-01-30
+5	USD Coin	USDC	1.000	0.03	43.11	4.18%	2023-01-30
+6	XRP	XRP	0.411	−0.08	20.86	2.02%	2023-01-30
+7	Binance USD	BUSD	1.002	0.09	15.79	1.53%	2023-01-30
+8	Cardano	ADA	0.389	0.64	13.44	1.3%	2023-01-30
+9	Dogecoin	DOGE	0.088	−0.78	11.69	1.13%	2023-01-30
+10	Polygon	MATIC	1.149	−0.21	10.04	0.97%	2023-01-30
+df_xl = df_summary.head(20)
+df_xl
+Digital Asset	Shorthand	Price $	Price Chg % 24h	Market Cap $Bn	Crypto Assets Market Share	date_time
+Rank							
+1	Bitcoin	BTC	23587.060	1.74	454.68	44.05%	2023-01-30
+2	Ethereum	ETH	1622.130	1.89	195.54	18.94%	2023-01-30
+3	Tether	USDT	1.000	0.01	67.63	6.55%	2023-01-30
+4	BNB	BNB	311.049	0.19	49.12	4.76%	2023-01-30
+5	USD Coin	USDC	1.000	0.03	43.11	4.18%	2023-01-30
+6	XRP	XRP	0.411	−0.08	20.86	2.02%	2023-01-30
+7	Binance USD	BUSD	1.002	0.09	15.79	1.53%	2023-01-30
+8	Cardano	ADA	0.389	0.64	13.44	1.3%	2023-01-30
+9	Dogecoin	DOGE	0.088	−0.78	11.69	1.13%	2023-01-30
+10	Polygon	MATIC	1.149	−0.21	10.04	0.97%	2023-01-30
+11	Solana	SOL	25.274	4.75	9.39	0.91%	2023-01-30
+12	Polkadot	DOT	6.461	−0.47	7.44	0.72%	2023-01-30
+13	Litecoin	LTC	93.262	−1.99	6.73	0.65%	2023-01-30
+14	Avalanche	AVAX	20.982	2.76	6.60	0.64%	2023-01-30
+15	Shiba Inu	SHIB	0.000	0.00	6.54	0.63%	2023-01-30
+16	Dai	DAI	0.999	−0.03	5.83	0.56%	2023-01-30
+17	TRON	TRX	0.063	−0.58	5.78	0.56%	2023-01-30
+18	Uniswap	UNI	6.763	−0.27	5.16	0.5%	2023-01-30
+19	Wrapped Bitcoin	WBTC	23536.397	1.59	4.16	0.4%	2023-01-30
+20	Cosmos	ATOM	13.590	1.97	3.89	0.38%	2023-01-30
+Add weekly % price change
+page_to_scrape = requests.get("https://www.coingecko.com/")
+soup = BeautifulSoup(page_to_scrape.text, "html.parser")
+pct_change = soup.findAll("td", attrs={"class":"td-change7d change7d stat-percent text-right col-market"})
+pct_change = [elt.text for elt in pct_change] # convert the bs4 object into a string of text that can be used
+​
+d = {'Price Chg % 7d':pct_change}
+​
+dfpc = pd.DataFrame(d)
+dfpc.head(11)
+Price Chg % 7d
+0	\n3.7%\n
+1	\n-0.5%\n
+2	\n-0.1%\n
+3	\n-0.1%\n
+4	\n2.6%\n
+5	\n2.4%\n
+6	\n-0.1%\n
+7	\n3.1%\n
+8	\n-0.2%\n
+9	\n15.5%\n
+10	\n4.2%\n
+Tidy data
+
+dfpc['Price Chg % 7d'] = dfpc['Price Chg % 7d'].str.replace('\n', '')
+dfpc['Price Chg % 7d'] = dfpc['Price Chg % 7d'].str.replace('%', '')
+dfpc
+Price Chg % 7d
+0	3.7
+1	-0.5
+2	-0.1
+3	-0.1
+4	2.6
+...	...
+95	5.4
+96	5.5
+97	14.9
+98	26.2
+99	-7.7
+100 rows × 1 columns
+
+rank = soup.findAll("td", attrs={"class":"table-number tw-text-left text-xs cg-sticky-col cg-sticky-second-col tw-max-w-14 lg:tw-w-14"})
+rank = [elt.text for elt in rank] # convert the bs4 object into a string of text that can be used
+​
+name = soup.findAll("td", attrs={"class":"py-0 coin-name cg-sticky-col cg-sticky-third-col px-0"})
+name = [elt.text for elt in name] # convert the bs4 object into a string of text that can be used
+d9 = {'Rank':rank,'Shorthand2':name}
+​
+df10 = pd.DataFrame(d9)
+df10['Rank'] = df10['Rank'].str.replace('\n', '')
+df10['Shorthand2'] = df10['Shorthand2'].str.replace('\n', '')
+df_additional = pd.concat([df10,dfpc], axis=1)
+df_additional.head(9)
+Rank	Shorthand2	Price Chg % 7d
+0	1	BitcoinBTC	3.7
+1	2	EthereumETH	-0.5
+2	3	TetherUSDT	-0.1
+3	4	USD CoinUSDC	-0.1
+4	5	BNBBNB	2.6
+5	6	XRPXRP	2.4
+6	7	Binance USDBUSD	-0.1
+7	8	CardanoADA	3.1
+8	9	DogecoinDOGE	-0.2
+# Make rank index
+df_additional.set_index('Rank', inplace=True)
+df_fin = df_additional.head(10)
+df_fin
+Shorthand2	Price Chg % 7d
+Rank		
+1	BitcoinBTC	3.7
+2	EthereumETH	-0.5
+3	TetherUSDT	-0.1
+4	USD CoinUSDC	-0.1
+5	BNBBNB	2.6
+6	XRPXRP	2.4
+7	Binance USDBUSD	-0.1
+8	CardanoADA	3.1
+9	DogecoinDOGE	-0.2
+10	PolygonMATIC	15.5
+Merge dataframe 'df_fin' with previous dataframe that doesn't incl. weekly % change, df11 (focusing only on the 10 coins with the greatest market cap) # FYI ED, I'VE CONVERTED THIS TO 9 FOR TODAY AS SOLANA AND POLYGON ARE TRADING AT = MARKET CAP, SO RUINS THE CODE
+
+df11 = df_xl.head(10)
+df_fin
+Shorthand2	Price Chg % 7d
+Rank		
+1	BitcoinBTC	3.7
+2	EthereumETH	-0.5
+3	TetherUSDT	-0.1
+4	USD CoinUSDC	-0.1
+5	BNBBNB	2.6
+6	XRPXRP	2.4
+7	Binance USDBUSD	-0.1
+8	CardanoADA	3.1
+9	DogecoinDOGE	-0.2
+10	PolygonMATIC	15.5
+df_12 = pd.concat([df_fin,df11], axis=1)
+df_12
+Shorthand2	Price Chg % 7d	Digital Asset	Shorthand	Price $	Price Chg % 24h	Market Cap $Bn	Crypto Assets Market Share	date_time
+Rank									
+1	BitcoinBTC	3.7	Bitcoin	BTC	23587.060	1.74	454.68	44.05%	2023-01-30
+2	EthereumETH	-0.5	Ethereum	ETH	1622.130	1.89	195.54	18.94%	2023-01-30
+3	TetherUSDT	-0.1	Tether	USDT	1.000	0.01	67.63	6.55%	2023-01-30
+4	USD CoinUSDC	-0.1	BNB	BNB	311.049	0.19	49.12	4.76%	2023-01-30
+5	BNBBNB	2.6	USD Coin	USDC	1.000	0.03	43.11	4.18%	2023-01-30
+6	XRPXRP	2.4	XRP	XRP	0.411	−0.08	20.86	2.02%	2023-01-30
+7	Binance USDBUSD	-0.1	Binance USD	BUSD	1.002	0.09	15.79	1.53%	2023-01-30
+8	CardanoADA	3.1	Cardano	ADA	0.389	0.64	13.44	1.3%	2023-01-30
+9	DogecoinDOGE	-0.2	Dogecoin	DOGE	0.088	−0.78	11.69	1.13%	2023-01-30
+10	PolygonMATIC	15.5	Polygon	MATIC	1.149	−0.21	10.04	0.97%	2023-01-30
+df12 = df_12.drop(columns=['Shorthand2']) # drop additional columns
+df12
+Price Chg % 7d	Digital Asset	Shorthand	Price $	Price Chg % 24h	Market Cap $Bn	Crypto Assets Market Share	date_time
+Rank								
+1	3.7	Bitcoin	BTC	23587.060	1.74	454.68	44.05%	2023-01-30
+2	-0.5	Ethereum	ETH	1622.130	1.89	195.54	18.94%	2023-01-30
+3	-0.1	Tether	USDT	1.000	0.01	67.63	6.55%	2023-01-30
+4	-0.1	BNB	BNB	311.049	0.19	49.12	4.76%	2023-01-30
+5	2.6	USD Coin	USDC	1.000	0.03	43.11	4.18%	2023-01-30
+6	2.4	XRP	XRP	0.411	−0.08	20.86	2.02%	2023-01-30
+7	-0.1	Binance USD	BUSD	1.002	0.09	15.79	1.53%	2023-01-30
+8	3.1	Cardano	ADA	0.389	0.64	13.44	1.3%	2023-01-30
+9	-0.2	Dogecoin	DOGE	0.088	−0.78	11.69	1.13%	2023-01-30
+10	15.5	Polygon	MATIC	1.149	−0.21	10.04	0.97%	2023-01-30
+Rearrange columns
+Now, let's rearrange the columns so to improve overall presentation
+
+titles = list(df12.columns)
+titles
+['Price Chg % 7d',
+ 'Digital Asset',
+ 'Shorthand',
+ 'Price $',
+ 'Price Chg % 24h',
+ 'Market Cap $Bn',
+ 'Crypto Assets Market Share',
+ 'date_time']
+newcolumns = ['Digital Asset','Shorthand','Price $','Price Chg % 24h', 'Price Chg % 7d','Market Cap $Bn','Crypto Assets Market Share','date_time']
+​
+dfnew = df12[newcolumns]
+dfnew.rename({'date_time': 'Date of entry', 'Crypto Assets Market Share': 'Market Cap as a % of Total Crypto Market', 'Price Chg % 24h': 'Price Change 24h', 'Price Chg % 7d':'Price Change 7d'}, axis=1, inplace=True)
+dfnew['Price Change 24h'] = dfnew['Price Change 24h'].astype(str) + '%'
+dfnew['Price Change 7d'] = dfnew['Price Change 7d'].astype(str) + '%'
+dfnew['Price $'] = '$' + dfnew['Price $'].astype(str)
+dfnew['Market Cap $Bn'] = '$' + dfnew['Market Cap $Bn'].astype(str) + 'Bn'
+dfnew
+Digital Asset	Shorthand	Price $	Price Change 24h	Price Change 7d	Market Cap $Bn	Market Cap as a % of Total Crypto Market	Date of entry
+Rank								
+1	Bitcoin	BTC	$23587.06	1.74%	3.7%	$454.68Bn	44.05%	2023-01-30
+2	Ethereum	ETH	$1622.13	1.89%	-0.5%	$195.54Bn	18.94%	2023-01-30
+3	Tether	USDT	$1.0	0.01%	-0.1%	$67.63Bn	6.55%	2023-01-30
+4	BNB	BNB	$311.049	0.19%	-0.1%	$49.12Bn	4.76%	2023-01-30
+5	USD Coin	USDC	$1.0	0.03%	2.6%	$43.11Bn	4.18%	2023-01-30
+6	XRP	XRP	$0.411	−0.08%	2.4%	$20.86Bn	2.02%	2023-01-30
+7	Binance USD	BUSD	$1.002	0.09%	-0.1%	$15.79Bn	1.53%	2023-01-30
+8	Cardano	ADA	$0.389	0.64%	3.1%	$13.44Bn	1.3%	2023-01-30
+9	Dogecoin	DOGE	$0.088	−0.78%	-0.2%	$11.69Bn	1.13%	2023-01-30
+10	Polygon	MATIC	$1.149	−0.21%	15.5%	$10.04Bn	0.97%	2023-01-30
+dfnew.rename({'Price $':'Price', 'Market Cap $Bn': 'Market Cap'}, axis=1, inplace=True)
+dfnew
+Digital Asset	Shorthand	Price	Price Change 24h	Price Change 7d	Market Cap	Market Cap as a % of Total Crypto Market	Date of entry
+Rank								
+1	Bitcoin	BTC	$23587.06	1.74%	3.7%	$454.68Bn	44.05%	2023-01-30
+2	Ethereum	ETH	$1622.13	1.89%	-0.5%	$195.54Bn	18.94%	2023-01-30
+3	Tether	USDT	$1.0	0.01%	-0.1%	$67.63Bn	6.55%	2023-01-30
+4	BNB	BNB	$311.049	0.19%	-0.1%	$49.12Bn	4.76%	2023-01-30
+5	USD Coin	USDC	$1.0	0.03%	2.6%	$43.11Bn	4.18%	2023-01-30
+6	XRP	XRP	$0.411	−0.08%	2.4%	$20.86Bn	2.02%	2023-01-30
+7	Binance USD	BUSD	$1.002	0.09%	-0.1%	$15.79Bn	1.53%	2023-01-30
+8	Cardano	ADA	$0.389	0.64%	3.1%	$13.44Bn	1.3%	2023-01-30
+9	Dogecoin	DOGE	$0.088	−0.78%	-0.2%	$11.69Bn	1.13%	2023-01-30
+10	Polygon	MATIC	$1.149	−0.21%	15.5%	$10.04Bn	0.97%	2023-01-30
+Output
+dfnew.to_excel(r'C:\Users\edward.lyons\The Investment Association\BRCR_SharedDrive - Documents\Technology\Weekly Tech Roundup\Weekly Commentary.xlsx', index=False)
+Share code with colleagues
+#### Install Command
+conda install pyinstaller
+Collecting package metadata (current_repodata.json): ...working... done
+Solving environment: ...working... done
+
+# All requested packages already installed.
+
+
+Note: you may need to restart the kernel to use updated packages.
+pip install auto-py-to-exe
+Requirement already satisfied: auto-py-to-exe in c:\users\edward.lyons\anaconda3\lib\site-packages (2.26.0)Note: you may need to restart the kernel to use updated packages.
+Requirement already satisfied: Eel==0.14.0 in c:\users\edward.lyons\anaconda3\lib\site-packages (from auto-py-to-exe) (0.14.0)
+
+Requirement already satisfied: pyinstaller>=4.6 in c:\users\edward.lyons\anaconda3\lib\site-packages (from auto-py-to-exe) (4.8)
+Requirement already satisfied: bottle in c:\users\edward.lyons\anaconda3\lib\site-packages (from Eel==0.14.0->auto-py-to-exe) (0.12.23)
+Requirement already satisfied: future in c:\users\edward.lyons\anaconda3\lib\site-packages (from Eel==0.14.0->auto-py-to-exe) (0.18.2)
+Requirement already satisfied: pyparsing in c:\users\edward.lyons\anaconda3\lib\site-packages (from Eel==0.14.0->auto-py-to-exe) (3.0.4)
+Requirement already satisfied: whichcraft in c:\users\edward.lyons\anaconda3\lib\site-packages (from Eel==0.14.0->auto-py-to-exe) (0.6.1)
+Requirement already satisfied: bottle-websocket in c:\users\edward.lyons\anaconda3\lib\site-packages (from Eel==0.14.0->auto-py-to-exe) (0.2.9)
+Requirement already satisfied: pefile>=2017.8.1 in c:\users\edward.lyons\anaconda3\lib\site-packages (from pyinstaller>=4.6->auto-py-to-exe) (2019.4.18)
+Requirement already satisfied: altgraph in c:\users\edward.lyons\anaconda3\lib\site-packages (from pyinstaller>=4.6->auto-py-to-exe) (0.17)
+Requirement already satisfied: setuptools in c:\users\edward.lyons\anaconda3\lib\site-packages (from pyinstaller>=4.6->auto-py-to-exe) (61.2.0)
+Requirement already satisfied: pywin32-ctypes>=0.2.0 in c:\users\edward.lyons\anaconda3\lib\site-packages (from pyinstaller>=4.6->auto-py-to-exe) (0.2.0)
+Requirement already satisfied: pyinstaller-hooks-contrib>=2020.6 in c:\users\edward.lyons\anaconda3\lib\site-packages (from pyinstaller>=4.6->auto-py-to-exe) (2022.14)
+Requirement already satisfied: gevent-websocket in c:\users\edward.lyons\anaconda3\lib\site-packages (from bottle-websocket->Eel==0.14.0->auto-py-to-exe) (0.10.1)
+Requirement already satisfied: gevent in c:\users\edward.lyons\anaconda3\lib\site-packages (from gevent-websocket->bottle-websocket->Eel==0.14.0->auto-py-to-exe) (22.10.2)
+Requirement already satisfied: cffi>=1.12.2 in c:\users\edward.lyons\anaconda3\lib\site-packages (from gevent->gevent-websocket->bottle-websocket->Eel==0.14.0->auto-py-to-exe) (1.15.0)
+Requirement already satisfied: zope.event in c:\users\edward.lyons\anaconda3\lib\site-packages (from gevent->gevent-websocket->bottle-websocket->Eel==0.14.0->auto-py-to-exe) (4.5.0)
+Requirement already satisfied: greenlet>=2.0.0 in c:\users\edward.lyons\anaconda3\lib\site-packages (from gevent->gevent-websocket->bottle-websocket->Eel==0.14.0->auto-py-to-exe) (2.0.1)
+Requirement already satisfied: zope.interface in c:\users\edward.lyons\anaconda3\lib\site-packages (from gevent->gevent-websocket->bottle-websocket->Eel==0.14.0->auto-py-to-exe) (5.4.0)
+Requirement already satisfied: pycparser in c:\users\edward.lyons\anaconda3\lib\site-packages (from cffi>=1.12.2->gevent->gevent-websocket->bottle-websocket->Eel==0.14.0->auto-py-to-exe) (2.21)
+(r'C:\Users\edward.lyons\OneDrive - The Investment Association\BRCR\Core workstreams intro\Tech>pyinstaller --onefile -w main.py')
+'C:\\Users\\edward.lyons\\OneDrive - The Investment Association\\BRCR\\Core workstreams intro\\Tech>pyinstaller --onefile -w main.py'
+​
